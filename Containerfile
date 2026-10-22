@@ -17,7 +17,8 @@ LABEL \
         org.opencontainers.image.vendor="Nfrastack <https://www.nfrastack.com>" \
         org.opencontainers.image.licenses="MIT"
 
-ARG OPENLDAP_VERSION="2.6.15" \
+ARG OPENLDAP_VERSION="2.6.16" \
+    OPENLDAP_REPO_URL="https://github.com/openldap/openldap" \
     CRACKLIB_VERSION="2.10.3" \
     CRACKLIB_REPO_URL="https://github.com/cracklib/cracklib" \
     SCHEMA2LDIF_VERSION="1.3"
@@ -95,14 +96,15 @@ RUN echo "" && \
                         && \
     \
     mkdir -p /usr/src/pbzip2 && \
-    curl -ssL https://launchpad.net/pbzip2/1.1/1.1.13/+download/pbzip2-1.1.13.tar.gz | tar xfz - --strip=1 -C /usr/src/pbzip2 && \
+    curl -ssL https://deb.debian.org/debian/pool/main/p/pbzip2/pbzip2_1.1.13.orig.tar.gz | tar xfz - --strip=1 -C /usr/src/pbzip2 && \
     cd /usr/src/pbzip2 && \
     make -j$(( $nproc -1 )) && \
     make install && \
     container_build_log add "PBZip2" "1.1.13" "launchpad.net/pbzip2" && \
     \
-    mkdir -p /nfrastack/openldap:$(head -n 1 /container/build/"${IMAGE_NAME/\//_}"/CHANGELOG.md | awk '{print $2}')/ && \
-    curl -sSL https://openldap.org/software/download/OpenLDAP/openldap-release/openldap-${OPENLDAP_VERSION}.tgz | tar xfz - --strip 1 -C /nfrastack/openldap:$(head -n 1 /container/build/"${IMAGE_NAME/\//_}"/CHANGELOG.md | awk '{print $2}')/ && \
+    #mkdir -p /nfrastack/openldap:$(head -n 1 /container/build/"${IMAGE_NAME/\//_}"/CHANGELOG.md | awk '{print $2}')/ && \
+    if [[ "${OPENLDAP_VERSION}" =~ ^[0-9]\.[0-9]\.[0-9]+$ ]] ; then ol_version="OPENLDAP_REL_ENG_${OPENLDAP_VERSION//./_}" ; else ol_version="${OPENLDAP_VERSION}" ; fi ; \
+    clone_git_repo "${OPENLDAP_REPO_URL}" "${ol_version}" /nfrastack/openldap:$(head -n 1 /container/build/"${IMAGE_NAME/\//_}"/CHANGELOG.md | awk '{print $2}') && \
     git clone --depth 1 git://git.alpinelinux.org/aports.git /nfrastack/openldap:$(head -n 1 /container/build/"${IMAGE_NAME/\//_}"/CHANGELOG.md | awk '{print $2}')/alpine && \
     mkdir -p contrib/slapd-modules/ppolicy-check-password && \
     git clone https://github.com/cedric-dufour/ppolicy-check-password /nfrastack/openldap:$(head -n 1 /container/build/"${IMAGE_NAME/\//_}"/CHANGELOG.md | awk '{print $2}')/contrib/slapd-modules/ppolicy-check-password && \
