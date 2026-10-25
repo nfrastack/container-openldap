@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 certificates() {
+    if var_true "${TLS_CREATE_SELFSIGNED}"; then TLS_CREATE_CA="TRUE"; fi
+
     certificates_create_certificate_authority() {
         if [ ! -f "${TLS_CA_CERT_PATH%/}"/"${TLS_CA_CERT_FILE}" ]; then
 
@@ -67,7 +69,7 @@ EOF
 
     certificates_create_certificate() {
         if [ "$1" != "" ]; then
-            if var_true "${TLS_CREATE_SELFSIGNED}"; then
+            if var_true "${TLS_CREATE_CA}"; then
                 if [ ! -f "${TLS_CERT_PATH%/}"/"${TLS_CERT_FILE}" ] || [ ! -f "${TLS_CA_CERT_PATH%/}"/"${TLS_CA_KEY_FILE}" ]; then
                     print_debug "Certificates: No CA Found - Creating before generating certificates"
                     certificates_create_certificate_authority
@@ -90,6 +92,7 @@ EOF
                     silent eval "openssl req \
                             -new -x509 -nodes -days 3650 \
                             -config /etc/ssl/openssl.cnf \
+                            -subj \"${CERT_SUBJECT}\" \
                             -out ${TLS_CERT_PATH%/}/${TLS_CERT_FILE} \
                             -keyout ${TLS_KEY_PATH%/}/${TLS_KEY_FILE}"
                 fi
@@ -141,7 +144,7 @@ EOF
     }
 
     certificates_trust_ca() {
-        if var_true "${TLS_CREATE_SELFSIGNED}"; then
+        if var_true "${TLS_CREATE_CA}"; then
             if [ -f "${TLS_CA_CERT_PATH%/}"/"${TLS_CA_CERT_FILE}" ]; then
                 if [ ! -L /usr/local/share/ca-certificates/"${TLS_CA_CERT_FILE}" ]; then
                     print_debug "Certificates: Trusting CA ${TLS_CA_NAME}"

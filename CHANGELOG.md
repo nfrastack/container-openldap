@@ -1,3 +1,9 @@
+## 2.6-8.1.3 2026-10-25 <code at nfrastack dot com>
+
+   ### Changed
+      - Fix self signed certificates not generating CA in some cases
+
+
 ## 2.6-8.1.2 2026-10-21 <code at nfrastack dot com>
 
    ### Added
